@@ -24,6 +24,8 @@ import { useRecoilState } from 'recoil';
 import { cartAtom } from '../../recoils/cart';
 import { HOME } from '../../navigations/Routes';
 
+import axios from 'axios';
+
 const DETAIL_DATA = {
   id: "1",
   title: "MB01. Super Combo 1",
@@ -63,17 +65,17 @@ const DETAIL_DATA = {
       required: 0,
       choices: [
         {
-          id: 7,
+          id: 10,
           name: "Curry Sauce",
           price: 5.00
         },
         {
-          id: 8,
+          id: 11,
           name: "Saucyy",
           price: 5.10
         },
         {
-          id: 9,
+          id: 12,
           name: "Yes Sauce",
           price: 7.00
         }
@@ -231,33 +233,72 @@ const DetailsScreen = ({ navigation, route }) => {
     })
   }
 
+  const addToCartApi = async (item) => {
+    console.log(item);
+    axios({
+      method: 'post',
+      url: 'http://89cadac8552c.ngrok.io/api/cart/H3U3XX/add-item',
+      headers: {
+        'Accept': 'application/json'
+      },
+      data: item
+    })
+    .then((response) => {
+      console.log('resp', response.data)
+    })
+    .catch((error) => {
+      console.log('err', error.response.data)
+    });
+  };
+
   const onAddToCart = () => {
-    // Make api call to save the new item to cart
+    let { addOns, ...item } = itemState;
+    let choices = [];
 
-    setItemState((prevState) => {
-      return update(prevState, {
-        $apply: function(item) {
-          return {
-            ...item,
-            totalPrice: total
+    itemState.addOns.map((addOn) => {
+      if(addOn.required == 1) {
+        choices.push(addOn.choices[addOn.selected].id);
+      } else { 
+        addOn.choices.forEach((choice) => {
+          if(choice.selected == 1) {
+            choices.push(choice.id);
           }
-        }
-      });
-    }, () => {
-      console.log('indeisde', itemState)
+        });
+      }
     });
-    
-    console.log(itemState);
 
-    setCartAtom((prevState) => {
-      return update(prevState, {
-        items: {
-          $push: [itemState]
-        } 
-      })
-    });
+    item['choices'] = choices;
+    item.totalPrice = total;
+
+    addToCartApi(item);
+    // console.log('choices', choices);
+
+    // setItemState((prevState) => {
+    //   return update(prevState, {
+    //     $apply: function(item) {
+    //       return {
+    //         ...item,
+    //         totalPrice: total
+    //       }
+    //     }
+    //   });
+    // });
+
+    // const updatedCart = update(prevState, {
+    //   items: {
+    //     $push: [itemState]
+    //   } 
+    // })
+
+    // setCartAtom(updatedCart);
+    // await setCartAtom((prevState) => {
+      // return update(prevState, {
+      //   items: {
+      //     $push: [itemState]
+      //   } 
+      // })
+    // });
     
-    console.log('cartt', cart)
     // navigation.navigate(HOME);
   }
 

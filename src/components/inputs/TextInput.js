@@ -25,7 +25,7 @@ const TextInput = React.memo( props => {
 
   return (
     <Input
-      size="small"
+      // size="small"
       style={{ ...styles.input, ...props.style }}
       value={ props.value }
       placeholder={ props.placeholder || '' }
