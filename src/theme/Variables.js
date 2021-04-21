@@ -13,6 +13,7 @@ const fonts = {
   s1: "Lato-Bold",
   s2: "Lato-Italic",
   p1: "Lato-Regular",
+  p2: "Lato-Bold",
   c1: "Lato-Bold"
 }
 
@@ -22,6 +23,7 @@ const fontSizes = {
   s1: 18,
   s2: 14,
   p1: 14,
+  p2: 14,
   c1: 11
 }
 

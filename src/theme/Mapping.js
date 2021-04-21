@@ -9,11 +9,13 @@ const mapping = {
     "text-subtitle-1-font-family": fonts.s1,
     "text-subtitle-2-font-family": fonts.s2,
     "text-caption-1-font-family": fonts.c1,
+    "text-paragraph-2-font-family": fonts.p2,
     "text-heading-1-font-size": fontSizes.h1,
     "text-heading-2-font-size": fontSizes.h2,
     "text-subtitle-1-font-size": fontSizes.s1,
     "text-subtitle-2-font-size": fontSizes.s2,
     "text-paragraph-1-font-size": fontSizes.p1,
+    "text-paragraph-1-font-size": fontSizes.p2,
     "text-caption-1-font-size": fontSizes.c1
   },
   "components": {
