@@ -1,30 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Text, Button } from '@ui-kitten/components';
 import { Image } from 'react-native';
-import update from 'immutability-helper';
+import { Layout, Text } from '@ui-kitten/components';
 
 import StyleSheet from 'react-native-media-query';
 import ScrollLayout from '../../components/layouts/ScrollLayout';
+import { Flex, Width, Spacing } from '../../styles';
 
 import { item_img } from '../../../assets/images';
-import { Flex, Width, Spacing, Generic } from '../../styles';
-import { desktopBreakpoint, tabletBreakpoint } from '../../theme/Breakpoints';
 import { spicy_icon, thumb_icon, vegetarian_icon } from '../../../assets/icons/custom/index';
 
-import GenericCard from '../../components/cards/GenericCard';
-import Subtitle from '../../components/typography/Subtitle';
-import TextInput from '../../components/inputs/TextInput';
-import AddOnRadio from '../../components/radios/AddOnRadio';
-import AddOnCheckBox from '../../components/checkboxes/AddOnCheckBox';
-import GenericButton from '../../components/buttons/GenericButton';
-
-import Item from '../../models/Item';
-
-import { useRecoilState } from 'recoil';
+import { useRecoilCallback, useRecoilState } from 'recoil';
+import { addOnIds, amountButtonState, choiceIds, productState } from '../../recoils/product/Atom';
+import { allAddOnSelector, allChoiceSelector } from '../../recoils/product/Selector';
 import { cartAtom } from '../../recoils/cart';
-import { HOME } from '../../navigations/Routes';
 
-import axios from 'axios';
+import { productSchema } from '../../schema/Product';
+
+import AmountButton from './details/partials/AmountButton';
+import AddOnCard from './details/partials/AddOnCard';
+import InstructionCard from './details/partials/InstructionCard';
+import SubmitButton from './details/partials/SubmitButton';
+
+import _ from 'lodash';
+import { inputSelector } from '../../recoils/input/Selector';
 
 const DETAIL_DATA = {
   id: "1",
@@ -36,7 +34,7 @@ const DETAIL_DATA = {
   vegetarian: true,
   add_ons: [
     {
-      id: 3,
+      id: 2,
       name: "Extras",
       limit: 1,
       required: 1,
@@ -85,222 +83,56 @@ const DETAIL_DATA = {
 };
 
 const DetailsScreen = ({ navigation, route }) => {
-  const [itemState, setItemState] = useState(null);
-  const [total, setTotal] = useState(0.00);
-  const [cart, setCartAtom] = useRecoilState(cartAtom);
+  const [product, setProduct] = useRecoilState(productState);
 
-  useEffect(() => {
-    // Make API call to get the actual data based on route.params.itemId
-
-    const item = new Item(
-      DETAIL_DATA.id, 
-      DETAIL_DATA.title, 
-      DETAIL_DATA.description, 
-      DETAIL_DATA.price, 
-      1, 
-      0.00,
-      "",
-      DETAIL_DATA.thumb, 
-      DETAIL_DATA.spicy, 
-      DETAIL_DATA.vegetarian, 
-      DETAIL_DATA.add_ons
-    );
+  const resetAll = useRecoilCallback(({snapshot, reset }) => async () => {
+    const addOnIdsValue = await snapshot.getPromise(addOnIds);
+    const choiceIdsValue = await snapshot.getPromise(choiceIds);
     
-    setItemState(item);
-  }, []);
-
-  useEffect(() => {
-    if(itemState == null) {
-      return;
+    reset(productState);
+    reset(amountButtonState);
+    reset(inputSelector(0));
+    
+    if(addOnIdsValue.length != 0) {
+      reset(allAddOnSelector(addOnIdsValue));
+      reset(addOnIds);
     }
 
-    let calcTotal = 0;
+    if(choiceIdsValue.length != 0) {
+      reset(allChoiceSelector(choiceIdsValue));
+      reset(choiceIds);
+    }
+  });
 
-    calcTotal += itemState.price * itemState.quantity;
+  const getProduct = async () => {
+    await resetAll();
+
+    const normalizedData = productSchema(DETAIL_DATA);
+    setProduct(normalizedData);
+    console.log(normalizedData)
+  }
+
+  useEffect(() => {
+    getProduct();
+    // Make API call to get the actual data based on route.params.itemId
+    // console.log(DETAIL_DATA);
+
+    // const item = new Item(
+    //   DETAIL_DATA.id, 
+    //   DETAIL_DATA.title, 
+    //   DETAIL_DATA.description, 
+    //   DETAIL_DATA.price, 
+    //   1, 
+    //   0.00,
+    //   "",
+    //   DETAIL_DATA.thumb, 
+    //   DETAIL_DATA.spicy, 
+    //   DETAIL_DATA.vegetarian, 
+    //   DETAIL_DATA.add_ons
+    // );
     
-    itemState.addOns.forEach((addOn, index) => {
-      if(addOn.required == 1) {
-        calcTotal += addOn.choices[addOn.selected].price;
-      } else {
-        addOn.choices.forEach((choice) => {
-          if(choice.selected == 1) {
-            calcTotal += choice.price;
-          }
-        })
-      }
-    });    
-
-    setTotal(calcTotal);
-  }, [itemState]);
-
-  const getSideText = (addOn) => {
-    let text = "";
-
-    text += addOn.required == 1 ? "Required" : "Optional"; 
-    text += addOn.limit == 1 ? ", Pick 1" : `, Max: ${addOn.limit}`;
-
-    return text;
-  }
-
-  const onMinusQuantity = (quantity) => {
-    setItemState((prevState) => {
-      if(prevState.quantity <= 1) {
-        return prevState;
-      }
-
-      return update(prevState, {
-        $apply: function(item) {
-          return {
-            ...item,
-            quantity: quantity
-          }
-        } 
-      });
-    });
-  };
-
-  const onAddQuantity = (quantity) => {
-    setItemState((prevState) => {
-      return update(prevState, {
-        $apply: function(item) {
-          return {
-            ...item,
-            quantity: quantity
-          }
-        } 
-      })
-    });
-  };
-
-  const onUpdateRadio = (addOnIndex, selectedIndex) => {
-    setItemState((prevState) => {
-      return update(prevState, {
-        addOns: {
-          [addOnIndex]: {
-            $apply: function(item) {
-              return {
-                ...item,
-                selected: selectedIndex
-              }
-            }
-          }
-        }
-      });
-    })
-  }
-
-  const onUpdateChecked = (addOnIndex, checkboxIndex, nextChecked) => {
-    setItemState((prevState) => {
-      const addOn = prevState.addOns[addOnIndex];
-  
-      const selected = addOn.choices.filter((choice) => {
-        return choice.selected == true
-      });
-      
-      if(nextChecked == true && selected.length >= addOn.limit) {
-        return prevState;
-      }
-
-      return update(prevState, {
-        addOns: {
-          [addOnIndex]: {
-            choices: {
-              [checkboxIndex]: {
-                $apply: function(item) {
-                  return {
-                    ...item,
-                    selected: nextChecked
-                  }
-                }
-              }
-            }
-          }
-        }
-      });
-    })
-  }
-
-  const onUpdateNote = (nextInput) => {
-    setItemState((prevState) => {
-      return update(prevState, {
-        $apply: function(item) {
-          return {
-            ...item,
-            note: nextInput
-          }
-        }
-      })
-    })
-  }
-
-  const addToCartApi = async (item) => {
-    console.log(item);
-    axios({
-      method: 'post',
-      url: 'http://89cadac8552c.ngrok.io/api/cart/H3U3XX/add-item',
-      headers: {
-        'Accept': 'application/json'
-      },
-      data: item
-    })
-    .then((response) => {
-      console.log('resp', response.data)
-    })
-    .catch((error) => {
-      console.log('err', error.response.data)
-    });
-  };
-
-  const onAddToCart = () => {
-    let { addOns, ...item } = itemState;
-    let choices = [];
-
-    itemState.addOns.map((addOn) => {
-      if(addOn.required == 1) {
-        choices.push(addOn.choices[addOn.selected].id);
-      } else { 
-        addOn.choices.forEach((choice) => {
-          if(choice.selected == 1) {
-            choices.push(choice.id);
-          }
-        });
-      }
-    });
-
-    item['choices'] = choices;
-    item.totalPrice = total;
-
-    addToCartApi(item);
-    // console.log('choices', choices);
-
-    // setItemState((prevState) => {
-    //   return update(prevState, {
-    //     $apply: function(item) {
-    //       return {
-    //         ...item,
-    //         totalPrice: total
-    //       }
-    //     }
-    //   });
-    // });
-
-    // const updatedCart = update(prevState, {
-    //   items: {
-    //     $push: [itemState]
-    //   } 
-    // })
-
-    // setCartAtom(updatedCart);
-    // await setCartAtom((prevState) => {
-      // return update(prevState, {
-      //   items: {
-      //     $push: [itemState]
-      //   } 
-      // })
-    // });
-    
-    // navigation.navigate(HOME);
-  }
+    // setItemState(item);
+  }, []);
 
   const render = () => {
     return (
@@ -316,91 +148,29 @@ const DetailsScreen = ({ navigation, route }) => {
             </Layout>
 
             <Layout style={ styles.title }>
-              <Text category="s1">{ itemState.title }</Text>
-              <Text category="s1">RM { itemState.price.toFixed(2) }</Text>
+              <Text category="s1">{ product.entities.product[1].title }</Text>
+              <Text category="s1">RM { product.entities.product[1].price.toFixed(2) }</Text>
             </Layout>
 
-            <Layout style={ styles.title }>
-              <Text category="p1" style={ Spacing.my_2 }>{ itemState.description }</Text>
-
-              <Layout style={ styles.amountContainer }>
-                <Button size="tiny" style={ styles.quantityBtn } onPress={() => onMinusQuantity(itemState.quantity - 1)}>
-                  <Text category="s1" status="control" >-</Text>
-                </Button>
-            
-                <Layout>
-                  <Text category="s1" style={ [Spacing.mx_4, Spacing.mt_2] }>{ itemState.quantity }</Text>
-                </Layout>
-                
-                <Button size="tiny" style={ styles.quantityBtn } onPress={() => onAddQuantity(itemState.quantity + 1)}>
-                  <Text category="s1" status="control" >+</Text>  
-                </Button>  
-              </Layout>  
-            </Layout>
+            <AmountButton />
 
             <Layout style={ styles.addOnContainer }>
               {
-                itemState.addOns.map((addOn, addOnIndex) => {
+                Object.entries(product.entities.addOns).map(([key, addOn], index) => {
                   return (
-                    <GenericCard style={ styles.card } key={ addOnIndex } dataSet={{ media: ids.card }}>
-                      <Subtitle
-                        text={ addOn.name }
-                        style={{ backgroundColor: "white" }}
-                        sideText={ getSideText(addOn) }
-                        sideCategory="s2"
-                        sideStatus="info"
-                      />
-                      
-                      {
-                        addOn.required == 1
-                        ? 
-                        <AddOnRadio
-                          selected={ addOn.selected }
-                          addOnIndex={ addOnIndex }
-                          onChange={ onUpdateRadio }
-                          choices={ addOn.choices }
-                        />
-                        :
-                          <Layout>
-                            { 
-                              addOn.choices.map((choice, index) => {
-                                return <AddOnCheckBox 
-                                  selected={ choice.selected }
-                                  addOnIndex={ addOnIndex }
-                                  onChange={ onUpdateChecked }
-                                  choice={ choice }
-                                  index={ index }
-                                  key={ index }
-                                />
-                              })
-                            }
-                          </Layout>
-                      }
-                    </GenericCard>
+                    <AddOnCard
+                      addOn={ addOn }
+                      keyValue={ parseInt(key) } 
+                      index={ index }
+                      key={ key }
+                    />
                   );
                 })
-              }          
+              }
             </Layout>
-
-            <GenericCard style={ styles.noteContainer }>
-              <Subtitle
-                text="Special Instruction"
-                style={{ backgroundColor: "white" }}
-                sideText="Optional"
-                sideCategory="s2"
-                sideStatus="info"
-              />
-
-              <TextInput 
-                value={ itemState.note }
-                placeholder='E.g. No coriander'
-                onChange={ onUpdateNote }
-              />
-            </GenericCard>
-            <GenericButton 
-              text={ "Add to Cart - RM " + total.toFixed(2) }
-              onClick={ onAddToCart }
-            />
+            
+            <InstructionCard />
+            <SubmitButton />
           </Layout>
         </Layout>
       </ScrollLayout>
@@ -408,9 +178,9 @@ const DetailsScreen = ({ navigation, route }) => {
   }
 
   return (
-    itemState == null
+    _.isEmpty(product)
     ?
-      <Text>Heello</Text>
+      <Text>Loading...</Text>
     :
       render()
   );
@@ -435,50 +205,6 @@ const {ids, styles} = StyleSheet.create({
     ...Spacing.my_3,
     ...Flex.row,
     ...Flex.justifyBetween
-  },
-  amountContainer: {
-    ...Flex.row,
-    ...Flex.justifyCenter
-  },
-  quantityBtn: {
-    height: 30,
-    width: 30
-  },
-  amountInput: {
-    width: 40
-  },
-  addOnContainer: {
-    ...Flex.row,
-    flexWrap: "wrap",
-    ...Flex.justifyBetween,
-  },
-  card: {
-    ...Spacing.p_3, 
-    ...Spacing.my_3,
-    ...Width.w_100,
-    [desktopBreakpoint]: {
-      width: "49%",
-    },
-    [tabletBreakpoint]: {
-      width: "49%",
-    }
-  },
-  choiceContainer: {
-    ...Flex.flex,
-    ...Flex.row,
-    ...Flex.justifyBetween,
-    ...Spacing.ml_3,
-    ...Spacing.pb_1
-  },
-  input: {
-    ...Generic.box_shadow,
-    ...Spacing.mt_3,
-    ...Width.w_100
-  },
-  noteContainer: {
-    ...Spacing.p_3, 
-    ...Spacing.my_3,
-    ...Width.w_100
   }
 });
 

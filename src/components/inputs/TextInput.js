@@ -5,8 +5,12 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import StyleSheet from 'react-native-media-query';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
+import { useRecoilState } from 'recoil';
+import { inputSelector } from '../../recoils/input/Selector';
 
-const TextInput = React.memo( props => {
+const TextInput = (props) => {
+  const [input, setInput] = useRecoilState(inputSelector(props.id));
+
   const renderIcon = (imageProps) => {
     if(!props.icon) {
       return (
@@ -27,26 +31,22 @@ const TextInput = React.memo( props => {
     <Input
       // size="small"
       style={{ ...styles.input, ...props.style }}
-      value={ props.value }
+      value={ input.value }
       placeholder={ props.placeholder || '' }
       accessoryRight={ renderIcon }
-      onChangeText={ nextValue => props.onChange(nextValue) }
+      onChangeText={ nextValue => {
+        setInput({ value: nextValue });
+      }}
       dataSet={{ media: ids.input }}
     />   
   );
-}, (oldProps, newProps) => {
-  return _.isEqual(
-    _.omit(oldProps, ['onChange']), 
-    _.omit(newProps, ['onChange'])
-  );
-});
+};
 
 TextInput.propTypes = {
-  value: PropTypes.any.isRequired,
+  id: PropTypes.number.isRequired,
   style: PropTypes.object,
   placeholder: PropTypes.string,
-  icon: PropTypes.string,
-  onChange: PropTypes.func.isRequired
+  icon: PropTypes.string
 }
 
 const {ids, styles} = StyleSheet.create({

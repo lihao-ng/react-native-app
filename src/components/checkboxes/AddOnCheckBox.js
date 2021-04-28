@@ -4,7 +4,7 @@ import { Flex, Spacing } from '../../styles';
 import StyleSheet from 'react-native-media-query';
 import _ from 'lodash';
 
-const AddOnCheckBox = React.memo(props => {
+const AddOnCheckBox = ( props ) => {
   return (
     <CheckBox
       checked={ props.selected }
@@ -18,14 +18,7 @@ const AddOnCheckBox = React.memo(props => {
       }
     </CheckBox>
   ); 
-}
-, (oldProps, newProps) => {
-  return _.isEqual(
-    _.omit(oldProps, ['onChange']), 
-    _.omit(newProps, ['onChange'])
-  );
-}
-);
+};
 
 const {ids, styles} = StyleSheet.create({
   choiceContainer: {

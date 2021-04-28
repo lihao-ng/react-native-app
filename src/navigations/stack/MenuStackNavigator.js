@@ -8,6 +8,7 @@ import WebHeader from '../../components/headers/WebHeader';
 import * as Routes from '../Routes';
 import * as Components from '../../scenes/index';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import RecoilScreen from '../../scenes/menu/RecoilScreen';
 
 const Stack = createStackNavigator();
 const someData = 12;

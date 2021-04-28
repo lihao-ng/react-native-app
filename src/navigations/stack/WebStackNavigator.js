@@ -6,13 +6,14 @@ import WebHeader from '../../components/headers/WebHeader';
 
 import * as Routes from '../Routes';
 import * as Components from '../../scenes/index';
+import RecoilScreen from '../../scenes/menu/RecoilScreen';
 
 const Stack = createStackNavigator();
 
 const WebStackNavigator = () => {
   return(
     <Stack.Navigator 
-      initialRouteName={ Routes.HOME }  
+      initialRouteName={ Routes.HOME }
       headerStyle={{ height:80 }}
       headerMode="float"
       headerStyle={{

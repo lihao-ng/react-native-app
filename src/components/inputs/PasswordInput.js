@@ -4,16 +4,18 @@ import { Generic, Spacing } from '../../styles';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import StyleSheet from 'react-native-media-query';
 import PropTypes from 'prop-types';
+import { useRecoilState } from 'recoil';
+import { inputSelector } from '../../recoils/input/Selector';
 
 const PasswordInput = ( props ) => {
   const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [input, setInput] = useRecoilState(inputSelector(props.id));
 
   const toggleSecureEntry = () => {
     setSecureTextEntry(!secureTextEntry);
   };
 
   const renderIcon = (imageProps) => {
-    console.log(props.showIcon)
     if(!props.showIcon) {
       return (
         <></>
@@ -32,11 +34,11 @@ const PasswordInput = ( props ) => {
   return (
     <Input
       style={{ ...styles.input, ...props.style }}
-      value={ props.value }
+      value={ input.value }
       placeholder={ props.placeholder || '' }
       accessoryRight={ renderIcon }
       secureTextEntry={ secureTextEntry }
-      onChangeText={ nextValue => props.onChange(nextValue) }
+      onChangeText={ nextValue => setInput({ value: nextValue }) }
       dataSet={{ media: ids.input }}
     />   
   );

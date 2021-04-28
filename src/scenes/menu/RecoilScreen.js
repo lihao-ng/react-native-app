@@ -7,7 +7,7 @@ import { Flex, Spacing, Width } from '../../styles';
 import StyleSheet from 'react-native-media-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { useSetRecoilState, useRecoilState } from 'recoil';
+import { atom, useRecoilState, useSetRecoilState } from 'recoil';
 import { tokenAtom } from '../../recoils/token';
 
 import { isWeb } from '../../theme/Platform';
@@ -17,14 +17,29 @@ import TextInput from '../../components/inputs/TextInput';
 import PasswordInput from '../../components/inputs/PasswordInput';
 import Subtitle from '../../components/typography/Subtitle';
 import GenericButton from '../../components/buttons/GenericButton';
-import { HOME } from '../../navigations/Routes';
-import { allInputSelector } from '../../recoils/input/Selector';
-import { useNavigation } from '@react-navigation/core';
+import { HOME, LOGIN } from '../../navigations/Routes';
 
-const LoginScreen = ( props ) => {
+import { useNavigation } from '@react-navigation/native';
+import { allInputSelector } from '../../recoils/input/Selector';
+
+const RecoilScreen = ( props ) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+
+  const setToken = useSetRecoilState(tokenAtom);
+
+  // const inputsState = atom({
+  //   key: 'inputs',
+  //   default: [
+  //     {
+  //       value: ''
+  //     },
+  //     {
+  //       value: ''
+  //     }
+  //   ]
+  // });
   
   return (
     <ScrollLayout>
@@ -50,6 +65,22 @@ const LoginScreen = ( props ) => {
             icon={ "email" }
             onChange={ setEmail }
             id={0}
+          />   
+
+          <TextInput
+            value={ email }
+            placeholder='example@mail.com'
+            icon={ "email" }
+            onChange={ setEmail }
+            id={1}
+          />   
+
+          <TextInput
+            value={ email }
+            placeholder='example@mail.com'
+            icon={ "email" }
+            onChange={ setEmail }
+            id={2}
           />    
 
           <Subtitle 
@@ -88,33 +119,33 @@ const LoginScreen = ( props ) => {
   );
 }
 
-const SubmitButton = () => {
-  const [allInput, setAllInput] = useRecoilState(allInputSelector([0, 1, 2]));
-  const setToken = useSetRecoilState(tokenAtom);
-
+const SubmitButton = () => { 
   const navigation = useNavigation();
-
+  const [allInput, setAllInput] = useRecoilState(allInputSelector([0, 1, 2]));
+  
   const onLogin = async () => {
+
+    console.log('value', allInput);
+    await setAllInput();
     // Make auth call to server
 
-    // console.log(allInput);
+    // try {
+    //   const response = {
+    //     'user_id': 1,
+    //     'token': '1234567'
+    //   };
 
-    try {
-      const response = {
-        'user_id': 1,
-        'token': '1234567'
-      };
-
-      await AsyncStorage.setItem('@access_token', JSON.stringify(response));
+    //   await AsyncStorage.setItem('@access_token', JSON.stringify(response));
       
-      setToken(response);
+    //   setToken(response);
 
-      if(isWeb()) {
-        navigation.navigate(HOME);
-      }
-    } catch (e) {
-      console.log('err', e)
-    }
+    //   if(isWeb()) {
+        // props.navigation.navigate(HOME);
+        navigation.replace(LOGIN);
+    //   }
+    // } catch (e) {
+    //   console.log('err', e)
+    // }
   }
 
   return (
@@ -122,7 +153,7 @@ const SubmitButton = () => {
       text="Login"
       onClick={ onLogin }
     />
-  );
+  )
 }
 
 const {ids, styles} = StyleSheet.create({
@@ -165,4 +196,4 @@ const {ids, styles} = StyleSheet.create({
   }
 });
 
-export default LoginScreen;
+export default RecoilScreen;

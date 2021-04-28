@@ -9,7 +9,7 @@ const Subtitle = ( props ) => {
     <Layout style={{ ...styles.inputLabel, ...props.style }} dataSet={{ media: ids.inputLabel }}>
       <Text category="s1" style={ Spacing.mr_2 } status={ props.status ? props.status : "basic" }>{ props.text }</Text>   
       <Text 
-        category={ props.sideCategory ? props.sideCategory : "s" } 
+        category={ props.sideCategory ? props.sideCategory : "s1" } 
         status={ props.sideStatus ? props.sideStatus : "basic" }
       >
         { props.sideText }
